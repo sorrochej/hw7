@@ -1,6 +1,7 @@
   //window.addEventListener('DOMContentLoaded', async function(event) 
   firebase.auth().onAuthStateChanged(async function (user){
     let db = firebase.firestore()
+    console.log(db)
     let apiKey = '657128272c528825d4a3b01a7668bcb0'
     let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
     let json = await response.json()
@@ -9,18 +10,18 @@
   
     if (user) {
   
-      let UserEmail = firebase.auth().currentUser.email
-      let UserName = firebase.auth().currentUser.displayName
-      let UserID = firebase.auth().currentUser.uid
+      let userEmail = user.email
+      let userName = user.displayName
+      let userID = user.uid
   
       db.collection('users').doc(user.uid).set({
-        userID: UserID,
-        email: UserEmail
+        userID: userID,
+        email: userEmail
       })
-      //console.log(`${user.uid}`)
+      console.log(`${user.uid}`)
   
       document.querySelector('.sign-in-or-sign-out').innerHTML = `
-      <a> ${UserName} is signed in </a>
+      <a> ${userName} is signed in </a>
       <button class="text-white-500 underline sign-out">Sign Out</button>
       `
       document.querySelector('.sign-in-or-sign-out').addEventListener('click', function(event) {
@@ -31,29 +32,33 @@
 
     for (let i=0; i<movies.length; i++) {
       let movie = movies[i]
-      let docRef = await db.collection('watched').doc(`${movie.id}-${UserID}`).get()
+      //console.log(movie)
+      let docRef = await db.collection('watched').doc(`${movie.id}-${userID}`).get()
+      //console.log(docRef)
       let watchedMovie = docRef.data()
+      //console.log(watchedMovie)
       let opacityClass = ''
       if (watchedMovie) {
         opacityClass = 'opacity-20'
       }
   
       document.querySelector('.movies').insertAdjacentHTML('beforeend', `
-        <div class="w-1/5 p-4 movie-${movie.id}-${UserID} ${opacityClass}">
+        <div class="w-1/5 p-4 movie-${movie.id}-${userID} ${opacityClass}">
           <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" class="w-full">
           <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this!</a>
         </div>
       `)
   
-      document.querySelector(`.movie-${movie.id}-${UserID}`).addEventListener('click', async function(event) {
+      document.querySelector(`.movie-${movie.id}-${userID}`).addEventListener('click', async function(event) {
         event.preventDefault()
         let movieElement = document.querySelector(`.movie-${movie.id}-${UserID}`)
         movieElement.classList.add('opacity-20')
-        await db.collection('watched').doc(`${movie.id}-${UserID}`).set({})
+        await db.collection('watched').doc(`${movie.id}-${userID}`).set({})
       }) 
     }} else {
       console.log('signed out')
       let ui = new firebaseui.auth.AuthUI(firebase.auth())
+      console.log(ui)
       let authUIConfig = {
         signInOptions: [
           firebase.auth.EmailAuthProvider.PROVIDER_ID
